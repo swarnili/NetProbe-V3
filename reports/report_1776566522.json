@@ -1,0 +1,24 @@
+{
+    "config": {
+        "mode": "NORMAL",
+        "size": "5",
+        "iterations": "5",
+        "delay": false
+    },
+    "data": {
+        "NORMAL": {
+            "runs": [
+                967.21,
+                967.22,
+                967.22,
+                967.22,
+                967.22
+            ],
+            "avg": 967.22,
+            "min": 967.21,
+            "max": 967.22,
+            "std": 0.0,
+            "stability": 100.0
+        }
+    }
+}

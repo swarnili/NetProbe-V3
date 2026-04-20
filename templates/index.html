@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NETPROBE V3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- jsPDF CDN for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  
+  <link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">NET<span class="accent">PROBE</span><span class="version"> V3</span></div>
+    <div class="header-right">
+      <div class="live-clock" id="liveClock">00:00:00</div>
+      <div class="status-pill" id="statusPill">● IDLE</div>
+    </div>
+  </div>
+  <div class="header-scanline"></div>
+</header>
+
+
+<div class="sim-banner">
+  <span class="sim-icon">⚡</span>
+  <span>
+    <strong>Simulation Mode Active</strong> —
+    Speeds represent in-memory loopback throughput, not real ISP bandwidth.
+    Latency effects are exaggerated for visualization purposes.
+    Real-world VPN overhead is typically 10–40%.
+    &nbsp;|&nbsp; Model: TCP socket-based chunked transfer with simulated VPN tunneling overhead.
+  </span>
+</div>
+
+
+<main class="dashboard-grid">
+
+  
+  <section class="panel panel--input">
+    <div class="panel-label">SYSTEM_INIT</div>
+
+    
+    <div class="field-group">
+      <label class="field-label">OPERATIONAL_MODE</label>
+      <div class="btn-group" id="modeGroup">
+        <button class="seg-btn active" data-val="both">BOTH</button>
+        <button class="seg-btn" data-val="normal">NORM</button>
+        <button class="seg-btn" data-val="vpn">VPN</button>
+      </div>
+    </div>
+
+    
+    <div class="field-group">
+      <label class="field-label">PACKET_SIZE</label>
+      <div class="btn-group" id="sizeGroup">
+        <button class="seg-btn" data-val="5">5MB</button>
+        <button class="seg-btn active" data-val="10">10MB</button>
+        <button class="seg-btn" data-val="50">50MB</button>
+      </div>
+    </div>
+
+    
+    <div class="field-group">
+      <label class="field-label">ITERATIONS: <span class="accent" id="iterLabel">5</span></label>
+      <div class="slider-track">
+        <input type="range" id="iterSlider" min="3" max="10" value="5" class="custom-slider"/>
+      </div>
+    </div>
+
+   
+    <div class="field-group field-group--inline">
+      <label class="field-label">ARTIFICIAL_DELAY</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="delayToggle"/>
+        <span class="toggle-thumb"></span>
+      </label>
+    </div>
+
+    
+    <button class="run-btn" id="runBtn">
+      <span class="shine"></span>
+      <span>▶</span>
+      <span id="runBtnLabel">RUN EXPERIMENT</span>
+    </button>
+
+    
+    <div class="tech-badges">
+      <span class="badge green">TCP Socket Model</span>
+      <span class="badge green">Packet Chunking</span>
+      <span class="badge pink">VPN Tunnel Sim</span>
+      <span class="badge pink">Latency Injection</span>
+      <span class="badge">Statistical Analysis</span>
+    </div>
+
+   
+    <div class="history-section">
+      <div class="panel-label" style="margin-top:1.4rem">EXPERIMENT_HISTORY</div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">No experiments yet.</div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section class="panel panel--output">
+    <div class="panel-label">DATA_OUTPUT</div>
+
+  
+    <div class="readout-row">
+      <div class="readout-card">
+        <div class="readout-label">NORMAL_AVG</div>
+        <div class="readout-value accent-green" id="normalAvg">—</div>
+        <div class="readout-note">MB/s · loopback throughput</div>
+      </div>
+      <div class="readout-card">
+        <div class="readout-label">VPN_AVG</div>
+        <div class="readout-value accent-pink" id="vpnAvg">—</div>
+        <div class="readout-note">MB/s · tunnel + encrypt overhead</div>
+      </div>
+    </div>
+
+    
+    <div class="reality-box" id="realityBox" style="display:none">
+      <div class="rb-title">REAL-WORLD CONTEXT</div>
+      <span id="realityText"></span>
+    </div>
+
+    
+    <div class="stats-table-wrap" id="statsWrap" style="display:none">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>METRIC</th>
+            <th class="accent-green">NORMAL</th>
+            <th class="accent-pink">VPN</th>
+          </tr>
+        </thead>
+        <tbody id="statsBody"></tbody>
+      </table>
+    </div>
+
+    
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">BIONIC_TELEMETRY <span class="chart-sub">(Speed vs Runs)</span></div>
+        <canvas id="lineChart" height="160"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">THROUGHPUT_COMPARE <span class="chart-sub">(Avg MB/s)</span></div>
+        <canvas id="barChart" height="160"></canvas>
+      </div>
+    </div>
+
+    
+    <div class="chart-card chart-card--full" id="stabilityCard" style="display:none">
+      <div class="chart-title">STABILITY_VECTOR <span class="chart-sub">(higher = more consistent throughput)</span></div>
+      <canvas id="stabilityChart" height="100"></canvas>
+    </div>
+
+   
+    <div class="insights-section" id="insightsSection" style="display:none">
+      <div class="panel-label">INSIGHT_ENGINE</div>
+      <ul class="insights-list" id="insightsList"></ul>
+    </div>
+
+   
+    <div class="download-row" id="downloadRow" style="display:none">
+      <div class="panel-label">EXPORT_MODULE</div>
+      <div class="dl-btns">
+        <button class="dl-btn pdf-btn" id="dlPdf">↓ PDF REPORT</button>
+        <button class="dl-btn" id="dlJson">↓ JSON</button>
+        <button class="dl-btn" id="dlTxt">↓ TXT</button>
+        <button class="dl-btn" id="dlCsv">↓ CSV</button>
+      </div>
+    </div>
+
+    
+    <div class="runs-table-wrap" id="runsWrap" style="display:none">
+      <div class="panel-label">RUN_LOG</div>
+      <div class="runs-scroll">
+        <table class="runs-table">
+          <thead id="runsHead"></thead>
+          <tbody id="runsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+
+<footer class="site-footer">
+  <span>NETPROBE V3 — Network Performance Analysis Platform</span>
+  <div class="footer-tech">
+    <span>Model: TCP chunked transfer</span>
+    <span>VPN: Tunnel latency + encryption overhead sim</span>
+    <span>Localhost ≠ real ISP bandwidth</span>
+  </div>
+</footer>
+
+
+<script src="/static/main.js"></script>
+</body>
+</html>
